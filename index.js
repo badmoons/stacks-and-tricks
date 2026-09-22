@@ -125,6 +125,13 @@ class VM {
 	this.stack = new Stack();
 	this.ip = 0; // Do I even need ip? Is stack_top enough?
     }
+
+    // rest VM itself
+    reset() {
+	this.program = []
+	this.stack = new Stack();
+	this.ip = 0;
+    }	
     
     set_ip(value) {
 	if (value >= this.program.length || value < 0) {
@@ -141,7 +148,7 @@ class VM {
 	// execute instructions here ...
 	console.log("Started running ", this.program.length, "instructions total");
 	for (;this.ip < this.program.length;) {
-	    console.log("Running instruction: ", dissasembleInstruction(this.program[this.ip]));
+	    // console.log("Running instruction: ", dissasembleInstruction(this.program[this.ip]));
 	    interpret(this.program[this.ip++]);
 	}
     }
@@ -200,7 +207,7 @@ const interpret = (instruction) => {
     switch (instruction.type) {
     case OpType.PUSH:
 	vm.stack.push(instruction.operand);
-	console.log("In interpret(OpType.PUSH): ", vm.stack, vm.ip);
+	// console.log("In interpret(OpType.PUSH): ", vm.stack, vm.ip);
 	// we don't increment ip here since vm does it
 	break;
     case OpType.POP:
@@ -226,22 +233,18 @@ const interpret = (instruction) => {
     case OpType.ADD:
 	expect_operands("ADD", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() + vm.stack.top();
-	console.log(vm.stack);
 	break;
     case OpType.SUB:
 	expect_operands("SUB", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() - vm.stack.top();
-	console.log(vm.stack);
 	break;
     case OpType.MUL:
 	expect_operands("MUL", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() + vm.stack.top();
-	console.log(vm.stack);
 	break;
     case OpType.DIV:
 	expect_operands("DIV", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() / vm.stack.top();
-	console.log(vm.stack);
 	break;
     case OpType.JMP: // Just jump to address
 	expect_operands("JMP", 1); // maybe I should not check all this stuff at runtime and move it to a parser
@@ -252,7 +255,7 @@ const interpret = (instruction) => {
 	let address = vm.stack.pop();
 	let jumping = vm.stack.pop();
 	if (jumping === 1) { // checking explicitly is prob better
-	    console.log("WERE JUMPING!!!! To:", address);
+	    // console.log("WERE JUMPING!!!! To:", address);
 	    vm.set_ip(address);
 	} else {
 	    // don't jump
@@ -334,6 +337,7 @@ const parseAsm = (input) => {
     let line_counter;
     let symbol_counter;
 
+    vm.reset()
     const check_number_of_operands = (op_name, num_operands) => {
 	if (line.length > num_operands + 1 || line.length < num_operands + 1) {
 	    console.log(line, line.length, num_operands);
@@ -347,7 +351,8 @@ const parseAsm = (input) => {
 	throw message;
     }
     lines = input.trim().split('\n');
-    console.log("Progam text split by lines: ");
+    // need debug loggers don't have time tbh
+    // console.log("Progam text split by lines: ");
     for (line_counter = 0; line_counter < lines.length; line_counter++ ) { 
 	line = lines[line_counter].trim().split(' ');
 
@@ -390,8 +395,9 @@ const parseAsm = (input) => {
 
 const main = (input) => {
     console.log(String(vm.program));
-    parseAsm(input); // This pushes asm straight into vm.
+    parseAsm(input); // This pushes asm straight into vm and resets it.
 
     vm.run();
+    // vm.debug_print();
 }
 
