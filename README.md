@@ -1,6 +1,6 @@
 # My smol stack based VM
 
-Open `index.html` in your browser to run it.
+Open `index.html`(or [https://badmoons.github.io/stacks-and-tricks/](online demo)) in your browser to run it.
 I only tested it on firefox.
 
 Here is a fibonacci sequence generator example:
