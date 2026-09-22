@@ -2,16 +2,24 @@
 
 <body>
   <script src="index.js"></script>
-  <textarea id="input3" row="100" cols="10" placeholder="code goes here"/></textarea>
-  <button id="runButton">Run</button>
+
+  <h3>Asm input</h3>
+  <textarea id="asmInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
+  <button id="runAsmButton">Run asm</button>
   <script>
-    const input = document.querySelector("#input")
-    const button = document.querySelector("#runButton")
+    const asmInput = document.querySelector("#asmInput")
+    const button = document.querySelector("#runAsmButton")
 
     button.addEventListener("click", () => {
-	const text = input.value;
+	const text = asmInput.value;
 
 	main(text);
     })
+  </script>
+
+  <h3>Code input (TBD)</h3>
+  <textarea id="codeInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
+  <button id="runCodeButton">Run</button>
+  <script>
   </script>
 </body>
