@@ -360,7 +360,7 @@ const parseAsm = (input) => {
 	symbol_counter = 0;  // TODO: think about this later
 	let symbol = line[symbol_counter];
 
-	console.log(line);
+	// console.log(line);
 	
 	switch(symbol) {
 	case "push":
@@ -394,7 +394,7 @@ const parseAsm = (input) => {
 }
 
 const main = (input) => {
-    console.log(String(vm.program));
+    // console.log(String(vm.program));
     parseAsm(input); // This pushes asm straight into vm and resets it.
 
     vm.run();

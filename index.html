@@ -3,6 +3,26 @@
 <body>
   <script src="index.js"></script>
 
+  <h1>Smol vm</h1>
+Open browser console and press `run` button in `index.html`. It will print fibonacci numbers up to 230 (stops at 144).
+
+  <h2>Examples</h2>
+  <i>Fibonacci sequence:</i>
+  <pre><code>
+push 0
+push 1
+push 1
+print
+over
+add
+dup
+dup
+push 230
+gt
+push 3
+jt
+  </code></pre>
+
   <h3>Asm input</h3>
   <textarea id="asmInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
   <button id="runAsmButton">Run asm</button>
@@ -17,9 +37,11 @@
     })
   </script>
 
+<!--
   <h3>Code input (TBD)</h3>
   <textarea id="codeInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
   <button id="runCodeButton">Run</button>
   <script>
   </script>
+-->
 </body>

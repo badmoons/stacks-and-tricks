@@ -3,7 +3,7 @@
 Open `index.html` in your browser to run it.
 I only tested it on firefox.
 
-Here is a fibbonacci sequence generator example:
+Here is a fibonacci sequence generator example:
 ```asm
 push 0
 push 1
