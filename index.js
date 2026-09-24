@@ -271,7 +271,7 @@ const interpret = (instruction) => {
 	break;
     case OpType.MUL:
 	expect_operands("MUL", 2);
-	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() + vm.stack.top();
+	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() * vm.stack.top();
 	break;
     case OpType.DIV:
 	expect_operands("DIV", 2);
