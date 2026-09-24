@@ -8,7 +8,7 @@ const auto_reset = () => {
     _auto_var = 0;
 }
     
-const OpType = Object({
+const OpType = {
     PUSH: auto(),  POP: auto(),
     OVER: auto(), SWP: auto(), DUP: auto(),
 
@@ -24,7 +24,7 @@ const OpType = Object({
 
     PRINT: auto(),
     NOP: auto(),
-});
+};
 auto_reset();
 
 class Stack {
@@ -63,6 +63,28 @@ class Stack {
     toString() {
 	// works for now
 	let representation = `Stack(`;
+	for (let i = 0; i < this.length(); i++) {
+	    if (i > 5) { representation += '...'; break }
+	    representation += `${this.values[i]},`;
+	}
+	representation += ')';
+	return representation;
+    }
+}
+
+class Queue extends Stack {
+    get() {
+	/* Get element from the queue */
+	return this.values.shift();
+    }
+
+    ready() {
+	return !(this.values.length === 0);
+    }
+
+    toString() {
+	// works for now. I don't know how to just get the name of the class
+	let representation = `Queue(`;
 	for (let i = 0; i < this.length(); i++) {
 	    if (i > 5) { representation += '...'; break }
 	    representation += `${this.values[i]},`;
@@ -116,14 +138,19 @@ class VM {
     // Our Virtual Machine
 
     program; // This is where we load our byte code 
-    stack;   // This is where we store values. Afaik we can use just the stack without the program, but my brain does not brain rn
-    // We would basically need to pop the inscturction, then execute/interpret it as we do it now. or maybe not
+    stack;   // This is where we store values. 
     ip; // a.k.a program counter
+    output; /* (Queue) This is where we write things to.
+             * I don't want to just print somewhere from this vm, but instead
+	     * be able to get it from whereever I want to, and having a queue
+	     * seems like an okay way to do it
+	     */
 
-    constructor(program) {
+    constructor() {
 	this.program = [];
 	this.stack = new Stack();
 	this.ip = 0; // Do I even need ip? Is stack_top enough?
+	this.output = new Queue();
     }
 
     // rest VM itself
@@ -131,6 +158,7 @@ class VM {
 	this.program = []
 	this.stack = new Stack();
 	this.ip = 0;
+	this.output = new Queue();
     }	
     
     set_ip(value) {
@@ -153,6 +181,10 @@ class VM {
 	}
     }
 
+    print(arg) {
+	this.output.push(arg);
+    }
+
     debug_print() {
 	console.log("VM stack: ", String(vm.stack), "VM stack size: ", vm.stack.length(),  "Stack top: ", vm.stack.top());
     }
@@ -161,31 +193,30 @@ class VM {
 const dissasembleInstruction = (op) => {
     let type;
     switch(op.type) {
-    case OpType.PUSH:  type = "PUSH"; break;
-    case OpType.POP:  type = "POP"; break;
-    case OpType.SWP:  type = "SWP"; break;
-    case OpType.OVER:  type = "OVER"; break;
-    case OpType.DUP:  type = "DUP"; break;
-    case OpType.ADD:  type = "ADD"; break;
-    case OpType.SUB:  type = "SUB"; break;
-    case OpType.MUL:  type = "MUL"; break;
-    case OpType.DIV:  type = "DIV"; break;
-    case OpType.GT:  type = "GT"; break;
-    case OpType.LT:  type = "LT"; break;
-    case OpType.EQ:  type = "EQ"; break;
-    case OpType.JMP:  type = "JMP"; break;
-    case OpType.JT:  type = "JT"; break;
-    case OpType.JF:  type = "JF"; break;
+    case OpType.PUSH:	type = "PUSH"; break;
+    case OpType.POP:	type = "POP";  break;
+    case OpType.SWP:	type = "SWP";  break;
+    case OpType.OVER:	type = "OVER"; break;
+    case OpType.DUP:	type = "DUP";  break;
+    case OpType.ADD:	type = "ADD";  break;
+    case OpType.SUB:	type = "SUB";  break;
+    case OpType.MUL:	type = "MUL";  break;
+    case OpType.DIV:	type = "DIV";  break;
+    case OpType.GT:	type = "GT";   break;
+    case OpType.LT:	type = "LT";   break;
+    case OpType.EQ:	type = "EQ";   break;
+    case OpType.JMP:	type = "JMP";  break;
+    case OpType.JT:	type = "JT";   break;
+    case OpType.JF:	type = "JF";   break;
     case OpType.PRINT:  type = "PRINT"; break;
-    case OpType.NOP:  type = "NOP"; break;
+    case OpType.NOP:    type = "NOP";  break;
     default:
 	throw "ERROR: Dissasembling unkown instruction"
-	break;
     }
     return `${type}`
 }
 
-let vm = new VM();
+const vm = new VM();
 
 const interpret = (instruction) => {
     let left;
@@ -244,16 +275,19 @@ const interpret = (instruction) => {
 	break;
     case OpType.DIV:
 	expect_operands("DIV", 2);
-	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() / vm.stack.top();
+	if (vm.stack.values[vm.stack.length()-2] === 0) {
+	    throw "Division by zero error."
+	}
+	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() / vm.stack.pop();
 	break;
     case OpType.JMP: // Just jump to address
 	expect_operands("JMP", 1); // maybe I should not check all this stuff at runtime and move it to a parser
 	vm.set_ip(vm.stack.pop());
 	break;
-    case OpType.JT: 
+    case OpType.JT: {
 	expect_operands("JT", 1);
-	let address = vm.stack.pop();
-	let jumping = vm.stack.pop();
+	const address = vm.stack.pop();
+	const jumping = vm.stack.pop();
 	if (jumping === 1) { // checking explicitly is prob better
 	    // console.log("WERE JUMPING!!!! To:", address);
 	    vm.set_ip(address);
@@ -261,6 +295,7 @@ const interpret = (instruction) => {
 	    // don't jump
 	}
 	break;
+    }
     case OpType.JF:
 	expect_operands("JF", 1);
 
@@ -307,7 +342,8 @@ const interpret = (instruction) => {
     case OpType.PRINT:
 	expect_operands("PRINT", 1);
 
-	console.log(vm.stack.top());
+	vm.print(vm.stack.top());
+
 	break;
     case OpType.NOP:
 	break;
@@ -323,8 +359,8 @@ const emitOp = (Op) => {
 
 const parseValue = (value_string) => {
     // TODO: parse this in some better way idk.
-    let number = Number(value_string);
-    if (number === NaN) {
+    const number = Number(value_string);
+    if (isNaN(number)) {
 	throw "Illegal number literal";
     }
     return number;
@@ -335,18 +371,19 @@ const parseAsm = (input) => {
 
     let line;
     let line_counter;
+    let symbol;
     let symbol_counter;
 
     vm.reset()
     const check_number_of_operands = (op_name, num_operands) => {
 	if (line.length > num_operands + 1 || line.length < num_operands + 1) {
 	    console.log(line, line.length, num_operands);
-	    throw `ERROR(${line_counter}:${symbol_counter}): '${op_name}' takes only ${num_operands} argument(s)`;
+	    throw `ERROR(${line_counter+1}:${symbol_counter+1}): '${op_name}' takes only ${num_operands} argument(s)`;
 	}
     }
 
     if (!input) {
-	let message = "Program input is empty!"
+	const message = "Program input is empty!"
 	alert(message);
 	throw message;
     }
@@ -356,20 +393,22 @@ const parseAsm = (input) => {
     for (line_counter = 0; line_counter < lines.length; line_counter++ ) { 
 	line = lines[line_counter].trim().split(' ');
 
+	if (line[0] === "") {continue;};
 	// We do reset a symbol after parsing a line.
 	symbol_counter = 0;  // TODO: think about this later
-	let symbol = line[symbol_counter];
+	symbol = line[symbol_counter];
 
 	// console.log(line);
 	
 	switch(symbol) {
-	case "push":
+	case "push": {
 	    check_number_of_operands("PUSH", 1)
 	    // parse argument
 	    symbol_counter += 1;
-	    let operand = parseValue(line[symbol_counter]);
+	    const operand = parseValue(line[symbol_counter]);
 	    emitOp(Op.Push(operand));
 	    break;
+	}
 	case "pop":      emitOp(Op.Pop()); break; 
 	case "swp":      emitOp(Op.Swp()); break;
 	case "over":      emitOp(Op.Over()); break;
@@ -386,7 +425,7 @@ const parseAsm = (input) => {
 	case "print":    emitOp(Op.Print()); break;
 	case "nop":    emitOp(Op.Nop()); break;
 	default:
-	    throw `ERROR: Unknown instruction at (line:sybmol) ${line_counter}:${symbol_counter} : ${symbol}`;
+	    throw `ERROR(${line_counter+1}:${symbol_counter+1}): Unknown instruction: ${symbol}\n\t'${line}'`;
 	}
     }
 
@@ -398,6 +437,11 @@ const main = (input) => {
     parseAsm(input); // This pushes asm straight into vm and resets it.
 
     vm.run();
-    // vm.debug_print();
+    
+    let out = document.getElementById("output");
+
+    while (vm.output.ready()) {
+	out.textContent += vm.output.get() + '\n';
+    }
 }
 

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<head>
+  <meta></meta>
+  <title>Stacks and Tricks: tutor</title>
+</head>
+
+<body>
+<a href="./index.html">Go back</a>
+
+<h1>Tutorial</h1>
+
+<h2>Description</h2>
+
+<p>
+  This is a stack based VM without registers <i>(as of now at least)</i>.<br>
+  So all the data is stored on a stack.<br>
+  Some instructions remove elements from the stack,<br>
+  but some don't and only read them or move them around.
+</p>
+
+<p>
+  Before using any instruction, you are expected to put load some data.<br>
+  This is done with an intruction <code>push</code>.<br>
+  This VM is not developed enough to simulate some IO, so you only can
+  <code>print</code> the element that is currently currently at the top.<br>
+  <code>print</code> also adds newlines, but that all might change.
+</p>
+
+<h2>Instructions</h2>
+
+<p><i>
+    Note: math operations use top of the stack as a left argument, and second number as a right.
+</i></p>
+
+<ul>
+
+  <b>Stack manipulation:</b>
+  <li><code><b>push</b></code>: Put the number on top of the stack.</li>
+  <li><code><b>pop</b></code>: Remove the number from the top.</li>
+  <li><code><b>dup</b></code>: Copy the number at the top and put it at the top.</li>
+  <li><code><b>swp</b></code>: Swap the top with the next element.</li>
+  <li><code><b>over</b></code>: Swap the top with the 3rd element.</li>
+
+  <b>Math:</b><br>
+  All these instructions remove their operands from the stack.
+    <li><code><b>add</b></code>: Add 2 numbers on top of the stack and put the result at the top.</li>
+  <li><code><b>sub</b></code>: Subtract 2 numbers on top of the stack and put the result at the top.</li>
+  <li><code><b>mul</b></code>: Multiply 2 numbers on top of the stack and put the result at the top.</li>
+  <li><code><b>div</b></code>: Divide 2 numbers on top of the stack and put the result at the top.</li>
+
+  <b>Equality:</b>
+  <li><code><b>gt</b></code>: If the top is greater than the next element, put <b>1</b> at the top, else put <b>0</b>.</li>
+  <li><code><b>lt</b></code>: If the top is less than the next element, put <b>1</b> at the top, else put <b>0</b>.</li>
+  <li><code><b>eq</b></code>: If the top is equal to the next element, put <b>1</b> at the top, else put <b>0</b>.</li>
+
+  <b>Flow control:</b>
+  <li><code><b>jmp</b></code>: Unconditional jump to the program address located at the top.</li>
+  <li><code><b>jt</b></code>: If <b>1</b> is at the top, jump to the address equal to the number in the next stack element.</li>
+  <li><code><b>jf</b></code>: If <b>0</b> is at the top, jump to the address equal to the number in the next stack element.</li>
+
+  <b>Other:</b>
+  <li><code><b>print</b></code>: print the value at the top, does not pop it.</li>
+  <li><code><b>nop</b></code>: Does nothing, just increments the program counter. Useful to set a jump point.</li>
+</ul>
+
+</body>
