@@ -10,7 +10,7 @@ const auto_reset = () => {
     
 const OpType = {
     PUSH: auto(),  POP: auto(),
-    OVER: auto(), SWP: auto(), DUP: auto(),
+    OVER: auto(), SWAP: auto(), DUP: auto(),
 
     ADD: auto(),   SUB: auto(),
     MUL: auto(),   DIV: auto(),
@@ -107,7 +107,7 @@ class Op {
 
     static Push(value) { return new Op(OpType.PUSH, value); }
     static Pop() { return new Op(OpType.POP, null); }
-    static Swp() { return new Op(OpType.SWP, null); }
+    static Swap() { return new Op(OpType.SWAP, null); }
     static Over() { return new Op(OpType.OVER, null); }
     static Dup() { return new Op(OpType.DUP, null); }
 
@@ -195,7 +195,7 @@ const dissasembleInstruction = (op) => {
     switch(op.type) {
     case OpType.PUSH:	type = "PUSH"; break;
     case OpType.POP:	type = "POP";  break;
-    case OpType.SWP:	type = "SWP";  break;
+    case OpType.SWAP:	type = "SWAP";  break;
     case OpType.OVER:	type = "OVER"; break;
     case OpType.DUP:	type = "DUP";  break;
     case OpType.ADD:	type = "ADD";  break;
@@ -247,8 +247,8 @@ const interpret = (instruction) => {
     case OpType.DUP:
 	vm.stack.push(vm.stack.top());
 	break;
-    case OpType.SWP:
-	expect_operands("SWP", 2);
+    case OpType.SWAP:
+	expect_operands("SWAP", 2);
 	left = vm.stack.pop();
 	right = vm.stack.pop();
 	vm.stack.push(left);
@@ -410,7 +410,7 @@ const parseAsm = (input) => {
 	    break;
 	}
 	case "pop":      emitOp(Op.Pop()); break; 
-	case "swp":      emitOp(Op.Swp()); break;
+	case "swap":      emitOp(Op.Swap()); break;
 	case "over":      emitOp(Op.Over()); break;
 	case "dup":      emitOp(Op.Dup()); break;
 	case "add":      emitOp(Op.Add()); break;
