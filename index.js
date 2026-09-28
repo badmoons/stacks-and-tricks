@@ -432,18 +432,21 @@ const parseAsm = (input) => {
     lines = input.trim().split('\n');
 
     // parse labels/first pass
-    // TODO: This loop has to modify text so it includes NOPs in correct place for
-    // proper addressing and bytecode gen. One idea is to conver to linked list
-    // the other is to learn how does this execute after jumps, like does it
-    // run line 1 if you jump to line 1 or does it run line 2?
+    // TODO: Comments still break jumps, at least labels work without comments. that's something
+    // We use ip hack to count lines that actually have instructions in them, since parser is dumb,
+    // we decrement ip where in lines with labels, because it should not count them. 
+    let ip = 0;
     for (line_counter = 0; line_counter < lines.length; line_counter++) {
 	// parse label
 	line = lines[line_counter];
+	if (line && (line.substring(0, 2) != ";;")  ) { ip++; }
+
 	if (is_identifier(line.substring(0, line.length-1)) && line.endsWith(':')) {
+	    ip -= 1;
 	    let label = line.substring(0, line.length-1);
 	    
 	    if (!labels.has(label)) { 
-		labels.set(label, line_counter);
+		labels.set(label, ip); 
 	    } else {
 		throw `${line_counter}: Redefining a label ${label}`;
 	    }
