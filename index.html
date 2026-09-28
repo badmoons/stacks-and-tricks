@@ -10,12 +10,21 @@
   <h1>Smol vm</h1>
 
   <p><a href="./examples.html"><b>Examples</b></a></p>
-  <p><a href="./tutorial.html"><b>Short tutorial</b></a></p>
+  <p><a href="./tutorial.html"><b>Tutorial</b></a></p>
 
   <h3>Asm input</h3>
-  <textarea id="asmInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
-  <button id="runAsmButton">Run asm</button>
+  <div>
+    <button id="runAsmButton">Run asm</button>
+  </div>
 
+  <div>
+    <label for="debugOn">Enable Console Debug/Dissasembler</label>
+    <input type="checkbox" class="debugOn" value="false"/>
+  </div>
+
+  <div>
+    <textarea id="asmInput" rows="25" cols="45" placeholder="code goes here"/></textarea>
+  </div>
   <div>
     <p><b>Output</b></p><button id="clearOut">Clear</button>
 <pre>
@@ -25,13 +34,15 @@
   </div>
 
   <script>
+    // this is sort of our 'main' but for the browser, I am hoping I'll have the time to make a console/desktop version of the machine or more
     const asmInput = document.querySelector("#asmInput");
     const runButton = document.querySelector("#runAsmButton");
     const clearOut = document.querySelector("#clearOut");
 
     runButton.addEventListener("click", () => {
 	const text = asmInput.value;
-	main(text);
+	const debugOn = document.querySelector('.debugOn').checked;
+	main(text, debugOn);
     });
 
     clearOut.addEventListener("click", () => {

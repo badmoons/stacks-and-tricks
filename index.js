@@ -7,25 +7,34 @@ const auto = () => {
 const auto_reset = () => {
     _auto_var = 0;
 }
-    
-const OpType = {
-    PUSH: auto(),  POP: auto(),
-    OVER: auto(), SWAP: auto(), DUP: auto(),
 
-    ADD: auto(),   SUB: auto(),
-    MUL: auto(),   DIV: auto(),
+const english_alpha = new Set("abcdefghkijlmnopqrstuvwxyzABCDEFGHKIJLMNOPQRSTUVWXYZ");
+const identifier_charset = new Set([...english_alpha, ...new Set("1234567890_")]);
+const is_alpha = (string) => {
+    let i;
+    if (!string) { return false };
 
-    GT: auto(),
-    LT: auto(),
-    EQ: auto(),
+    for (i = 0; i < string.length - 1; i++) {
+	if (!english_alpha.has(string[i])) {
+	    return false;
+	}
+    }
 
-    JMP: auto(),
-    JT: auto(),   JF: auto(),
+    return true;
+}
+const is_identifier = (string) => {
+    let i;
 
-    PRINT: auto(),
-    NOP: auto(),
-};
-auto_reset();
+    if (!string) { return false };
+
+    for (i = 0; i < string.length - 1; i++) {
+	if (!identifier_charset.has(string[i])) {
+	    return false;
+	}
+    }
+
+    return true;
+}
 
 class Stack {
     values;
@@ -94,6 +103,27 @@ class Queue extends Stack {
     }
 }
 
+let DISASM_ENABLED = false;
+
+const OpType = {
+    PUSH: auto(),  POP: auto(),
+    OVER: auto(), SWAP: auto(), DUP: auto(),
+
+    ADD: auto(),   SUB: auto(),
+    MUL: auto(),   DIV: auto(),
+
+    GT: auto(),
+    LT: auto(),
+    EQ: auto(),
+
+    JMP: auto(),
+    JT: auto(),   JF: auto(),
+
+    PRINT: auto(),
+    NOP: auto(),
+};
+auto_reset();
+
 class Op {
     // Instruction/Operation constructor
 
@@ -123,9 +153,9 @@ class Op {
     
     // ---
     // jump family inscturction. These are awkward except for jmp
-    static Jmp() { return new Op(OpType.JMP, null); }
-    static Jt() { return new Op(OpType.JT, null); } // Jump if value on the stack is truthy
-    static Jf() { return new Op(OpType.JF, null); } // Jump falsey!
+    static Jmp(operand) { return new Op(OpType.JMP, operand); }
+    static Jt(operand) { return new Op(OpType.JT, operand); } // Jump if value on the stack is truthy
+    static Jf(operand) { return new Op(OpType.JF, operand); } // Jump falsey!
     // ---
 
     static Print() { return new Op(OpType.PRINT, null); }
@@ -174,9 +204,12 @@ class VM {
 	}
 
 	// execute instructions here ...
-	console.log("Started running ", this.program.length, "instructions total");
+	console.debug("Started running ", this.program.length, "instructions total");
 	for (;this.ip < this.program.length;) {
-	    // console.log("Running instruction: ", dissasembleInstruction(this.program[this.ip]));
+	    if (DISASM_ENABLED) {
+		console.debug("Running instruction: ", dissasembleInstruction(this.program[this.ip]), vm.stack.values);
+	    }
+
 	    interpret(this.program[this.ip++]);
 	}
     }
@@ -186,7 +219,7 @@ class VM {
     }
 
     debug_print() {
-	console.log("VM stack: ", String(vm.stack), "VM stack size: ", vm.stack.length(),  "Stack top: ", vm.stack.top());
+	console.debug("VM stack: ", String(vm.stack), "VM stack size: ", vm.stack.length(),  "Stack top: ", vm.stack.top());
     }
 }
 
@@ -213,7 +246,7 @@ const dissasembleInstruction = (op) => {
     default:
 	throw "ERROR: Dissasembling unkown instruction"
     }
-    return `${type}`
+    return `${type} ${op.operand}`
 }
 
 const vm = new VM();
@@ -281,16 +314,14 @@ const interpret = (instruction) => {
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() / vm.stack.pop();
 	break;
     case OpType.JMP: // Just jump to address
-	expect_operands("JMP", 1); // maybe I should not check all this stuff at runtime and move it to a parser
-	vm.set_ip(vm.stack.pop());
+	expect_operands("JMP", 0); 
+	vm.set_ip(instruction.operand);
 	break;
     case OpType.JT: {
 	expect_operands("JT", 1);
-	const address = vm.stack.pop();
 	const jumping = vm.stack.pop();
 	if (jumping === 1) { // checking explicitly is prob better
-	    // console.log("WERE JUMPING!!!! To:", address);
-	    vm.set_ip(address);
+	    vm.set_ip(instruction.operand);
 	} else {
 	    // don't jump
 	}
@@ -300,7 +331,7 @@ const interpret = (instruction) => {
 	expect_operands("JF", 1);
 
 	if (vm.stack.pop() === 0) {
-	    vm.set_ip(vm.stack.pop());
+	    vm.set_ip(instruction.operand);
 	} else {
 	    // don't jump
 	}
@@ -348,7 +379,7 @@ const interpret = (instruction) => {
     case OpType.NOP:
 	break;
     default:
-	console.log(vm.stack);
+	console.error(vm.stack);
 	throw `ERROR: Illegal inscturction: ${instruction.type}`;
     }
 }
@@ -357,28 +388,38 @@ const emitOp = (Op) => {
     vm.program.push(Op);
 }    
 
+// My made up asm Parser
+
+labels = new Map(); // name, address
+
 const parseValue = (value_string) => {
     // TODO: parse this in some better way idk.
     const number = Number(value_string);
     if (isNaN(number)) {
+	console.error(value_string, number)
 	throw "Illegal number literal";
     }
     return number;
 }
 
-const parseAsm = (input) => {
-    let result;
+const parseArgument = (arg, labels) => {
+    if (!is_identifier(arg)) {
+	return parseValue(arg);
+    }
 
-    let line;
-    let line_counter;
-    let symbol;
-    let symbol_counter;
+    return labels.get(arg);
+}
+
+const parseAsm = (input) => {
+    let line, line_counter;
+    let symbol, symbol_counter;
 
     vm.reset()
+
     const check_number_of_operands = (op_name, num_operands) => {
 	if (line.length > num_operands + 1 || line.length < num_operands + 1) {
-	    console.log(line, line.length, num_operands);
-	    throw `ERROR(${line_counter+1}:${symbol_counter+1}): '${op_name}' takes only ${num_operands} argument(s)`;
+	    console.error(line, line.length, num_operands);
+	    throw `ERROR(${line_counter}:${symbol_counter+1}): '${op_name}' takes only ${num_operands} argument(s)`;
 	}
     }
 
@@ -387,10 +428,38 @@ const parseAsm = (input) => {
 	alert(message);
 	throw message;
     }
+
     lines = input.trim().split('\n');
-    // need debug loggers don't have time tbh
+
+    // parse labels/first pass
+    // TODO: This loop has to modify text so it includes NOPs in correct place for
+    // proper addressing and bytecode gen. One idea is to conver to linked list
+    // the other is to learn how does this execute after jumps, like does it
+    // run line 1 if you jump to line 1 or does it run line 2?
+    for (line_counter = 0; line_counter < lines.length; line_counter++) {
+	// parse label
+	line = lines[line_counter];
+	if (is_identifier(line.substring(0, line.length-1)) && line.endsWith(':')) {
+	    let label = line.substring(0, line.length-1);
+	    
+	    if (!labels.has(label)) { 
+		labels.set(label, line_counter);
+	    } else {
+		throw `${line_counter}: Redefining a label ${label}`;
+	    }
+	    continue;
+	}
+	// end parse label
+    }
+
     // console.log("Progam text split by lines: ");
     for (line_counter = 0; line_counter < lines.length; line_counter++ ) { 
+	// if line is a label pass it.
+	line = lines[line_counter];
+	if (is_identifier(line.substring(0, line.length-1)) && line.endsWith(':')) {
+	    continue;
+	}
+
 	line = lines[line_counter].trim().split(' ');
 
 	if (line[0] === "") {continue;};
@@ -398,14 +467,13 @@ const parseAsm = (input) => {
 	symbol_counter = 0;  // TODO: think about this later
 	symbol = line[symbol_counter];
 
-	// console.log(line);
-	
 	switch(symbol) {
+	case ";;":   /* is a comment: just skip this line */ break;
 	case "push": {
 	    check_number_of_operands("PUSH", 1)
 	    // parse argument
-	    symbol_counter += 1;
-	    const operand = parseValue(line[symbol_counter]);
+	    symbol = line[++symbol_counter];
+	    const operand = parseValue(symbol);
 	    emitOp(Op.Push(operand));
 	    break;
 	}
@@ -417,8 +485,20 @@ const parseAsm = (input) => {
 	case "sub":      emitOp(Op.Sub()); break;
 	case "mul":      emitOp(Op.Mul()); break;
 	case "div":      emitOp(Op.Div()); break;
-	case "jmp":      emitOp(Op.Jmp()); break;
-	case "jt":      emitOp(Op.Jt()); break;
+	case "jmp": {
+	    check_number_of_operands("JMP", 1);
+	    symbol = line[++symbol_counter];
+	    const operand = parseArgument(symbol, labels);
+	    emitOp(Op.Jmp(operand));
+	    break;
+	}
+	case "jt": {
+	    check_number_of_operands("JT", 1);
+	    symbol = line[++symbol_counter];
+	    const operand = parseArgument(symbol, labels);
+	    emitOp(Op.Jt(operand));
+	    break;
+	}
 	case "gt":      emitOp(Op.Gt()); break;
 	case "lt":      emitOp(Op.Lt()); break;
 	case "eq":      emitOp(Op.Eq()); break;
@@ -429,13 +509,16 @@ const parseAsm = (input) => {
 	}
     }
 
-    return result;
+
 }
 
-const main = (input) => {
-    // console.log(String(vm.program));
-    parseAsm(input); // This pushes asm straight into vm and resets it.
 
+const main = (input, debugOn) => {
+    // console.log(String(vm.program));
+    DISASM_ENABLED = debugOn;
+    parseAsm(input); // This pushes asm straight into vm and resets it.
+    
+    labels = new Map(); // reset labels
     vm.run();
     
     let out = document.getElementById("output");

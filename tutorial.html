@@ -9,6 +9,11 @@
 
 <h1>Tutorial</h1>
 
+<p>
+I am still working on it from time to time and not sure still how I want things <br>
+to work, so consider this page is very likely to be outdated, see <a href="./examples.html">examples</a> instead or just experiment or look at the source code (it's ugly).
+</p>
+
 <h2>Description</h2>
 
 <p>
@@ -28,11 +33,6 @@
 </p>
 
 <h2>Instructions</h2>
-
-<p><i>
-    Note: math operations use top of the stack as a left argument, and second number as a right.
-</i></p>
-
 <ul>
 
   <b>Stack manipulation:</b>
@@ -55,9 +55,7 @@
   <li><code><b>eq</b></code>: If the top is equal to the next element, put <b>1</b> at the top, else put <b>0</b>.</li>
 
   <b>Flow control:</b>
-  <li><code><b>jmp</b></code>: Unconditional jump to the program address located at the top.</li>
-  <li><code><b>jt</b></code>: Jumps to the address location equal to the top, if the next element is true/false (yeah those are awkward)</li>
-  <li><code><b>jf</b></code>: Jumps to the address location equal to the top, if the next element is true/false</li>
+  <li><code><b>jmp</b></code>: Unconditional jump.</li>
 
   <b>Other:</b>
   <li><code><b>print</b></code>: print the value at the top, does not pop it.</li>
