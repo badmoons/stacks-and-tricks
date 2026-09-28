@@ -27,11 +27,9 @@ jt loop
   </li>
   <li><i>Conditional: print 420 if value is 1 else 69</i>
 <pre><code>
-   push 0
+   push 1
    jt _420
    push 69
-   print
-   pop
    jmp the_end
 _420:
    push 420
@@ -39,8 +37,8 @@ the_end:
    print
    nop
 
-;; is a comment
-;; more comments
+   ;; is a comment
+   ;; more comments
 </pre></code>
   </li>
 </ul>

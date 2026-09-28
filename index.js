@@ -257,7 +257,8 @@ const interpret = (instruction) => {
 
     const expect_operands = (op, number) => {
 	if (vm.stack.length() < number) {
-	    throw `ERROR: '${op}' expects ${number} operand(s), but stack does not have enough elements on it.`
+	    console.error("Current ip:", vm.ip);
+	    throw `ERROR: '${op}' expects ${number} operand(s), but stack does not have enough elements on it.`;
 	}
     }
 	
