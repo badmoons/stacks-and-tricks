@@ -9,7 +9,10 @@ const auto_reset = () => {
 }
 
 const english_alpha = new Set("abcdefghkijlmnopqrstuvwxyzABCDEFGHKIJLMNOPQRSTUVWXYZ");
-const identifier_charset = new Set([...english_alpha, ...new Set("1234567890_")]);
+const identifier_charset = new Set([
+    ...english_alpha,
+    ...new Set("1234567890_")
+]);
 const is_alpha = (string) => {
     let i;
     if (!string) { return false };
@@ -119,7 +122,7 @@ const OpType = {
     JMP: auto(),
     JT: auto(),   JF: auto(),
 
-    PRINT: auto(),
+    PRINT: auto(), PUTC: auto(),
     NOP: auto(),
 };
 auto_reset();
@@ -159,6 +162,7 @@ class Op {
     // ---
 
     static Print() { return new Op(OpType.PRINT, null); }
+    static Putc() { return new Op(OpType.PUTC, null); }
     static Nop() { return new Op(OpType.NOP, null); }
 
     toString() { return `OpType(${this.type}, ${this.operand})` }
@@ -214,7 +218,8 @@ class VM {
 	}
     }
 
-    print(arg) {
+    out_push(arg) {
+	// This is temporary (hopefully) until I figure out a better way to write and read
 	this.output.push(arg);
     }
 
@@ -242,6 +247,7 @@ const dissasembleInstruction = (op) => {
     case OpType.JT:	type = "JT";   break;
     case OpType.JF:	type = "JF";   break;
     case OpType.PRINT:  type = "PRINT"; break;
+    case OpType.PUTC:  type = "PUTC"; break;
     case OpType.NOP:    type = "NOP";  break;
     default:
 	throw "ERROR: Dissasembling unkown instruction"
@@ -258,7 +264,7 @@ const interpret = (instruction) => {
     const expect_operands = (op, number) => {
 	if (vm.stack.length() < number) {
 	    console.error("Current ip:", vm.ip);
-	    throw `ERROR: '${op}' expects ${number} operand(s), but stack does not have enough elements on it.`;
+	    throw `ERROR: '${op}' expects ${number} operand(s), but stack does not have enough elements on it: stack(${vm.stack}.`;
 	}
     }
 	
@@ -299,20 +305,24 @@ const interpret = (instruction) => {
 	expect_operands("ADD", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() + vm.stack.top();
 	break;
-    case OpType.SUB:
-	expect_operands("SUB", 2);
-	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() - vm.stack.top();
-	break;
     case OpType.MUL:
 	expect_operands("MUL", 2);
 	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() * vm.stack.top();
 	break;
+    case OpType.SUB:
+	expect_operands("SUB", 2);
+	right = vm.stack.pop()
+	left = vm.stack.pop()
+	vm.stack.push(left - right);
+	break;
     case OpType.DIV:
 	expect_operands("DIV", 2);
-	if (vm.stack.values[vm.stack.length()-2] === 0) {
+	right = vm.stack.pop()
+	left = vm.stack.pop()
+	if (vm.stack.values[right] === 0) {
 	    throw "Division by zero error."
 	}
-	vm.stack.values[vm.stack.length()-2] = vm.stack.pop() / vm.stack.pop();
+	vm.stack.push(left / right);
 	break;
     case OpType.JMP: // Just jump to address
 	expect_operands("JMP", 0); 
@@ -340,19 +350,19 @@ const interpret = (instruction) => {
     case OpType.GT:
 	expect_operands("GT", 2);
  	// Should we consume arguments? Probably yeah
+	right = vm.stack.pop(); // values[vm.stack.length()-2]
 	left = vm.stack.pop();
-	right = vm.stack.top(); // values[vm.stack.length()-2]
 
 	if (left > right) {
-	    vm.stack.set_top(1);
+	    vm.stack.push(1);
 	}  else {
-	    vm.stack.set_top(0);
+	    vm.stack.push(0);
 	}
 	break;
     case OpType.LT:
 	expect_operands("LT", 2);
-	left = vm.stack.pop();
 	right = vm.stack.top(); // values[vm.stack.length()-2]
+	left = vm.stack.pop();
 
 	if (left < right) {
 	    vm.stack.set_top(1);
@@ -362,8 +372,8 @@ const interpret = (instruction) => {
 	break;
     case OpType.EQ:
 	expect_operands("EQ", 2);
-	left = vm.stack.pop();
 	right = vm.stack.top(); // values[vm.stack.length()-2]
+	left = vm.stack.pop();
 
 	if (left === right) {
 	    vm.stack.set_top(1);
@@ -374,7 +384,13 @@ const interpret = (instruction) => {
     case OpType.PRINT:
 	expect_operands("PRINT", 1);
 
-	vm.print(vm.stack.top());
+	vm.out_push(vm.stack.top());
+
+	break;
+    case OpType.PUTC:
+	expect_operands("PUTC", 1);
+
+	vm.out_push(String.fromCharCode(vm.stack.pop()));
 
 	break;
     case OpType.NOP:
@@ -507,6 +523,7 @@ const parseAsm = (input) => {
 	case "lt":      emitOp(Op.Lt()); break;
 	case "eq":      emitOp(Op.Eq()); break;
 	case "print":    emitOp(Op.Print()); break;
+	case "putc":    emitOp(Op.Putc()); break;
 	case "nop":    emitOp(Op.Nop()); break;
 	default:
 	    throw `ERROR(${line_counter+1}:${symbol_counter+1}): Unknown instruction: ${symbol}\n\t'${line}'`;
@@ -528,7 +545,7 @@ const main = (input, debugOn) => {
     let out = document.getElementById("output");
 
     while (vm.output.ready()) {
-	out.textContent += vm.output.get() + '\n';
+	out.textContent += vm.output.get();
     }
 }
 

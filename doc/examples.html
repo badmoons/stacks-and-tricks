@@ -4,18 +4,21 @@
   <title>Stacks and Tricks: Examples</title>
 </head>
 
-<a href="./index.html">Go back</a>
+<a href="../index.html">Go back</a>
 
 <h1>Examples</h1>
 
 <ul>
-  <li>Fibonacci sequence
+  <li><i>Fibonacci sequence</i>
 <pre><code>
 push 0
 push 1
 push 1
 loop:
 print
+;; push newline
+push 10
+putc
 over
 add
 dup
@@ -25,7 +28,7 @@ gt
 jt loop
 </pre></code>
   </li>
-  <li><i>Conditional: print 420 if value is 1 else 69</i>
+  <li><i>Truth machine</i>
 <pre><code>
    push 1
    jt _420
@@ -35,10 +38,38 @@ _420:
    push 420
 the_end:
    print
+   push 10
+   putc
    nop
 
    ;; is a comment
    ;; more comments
+</pre></code>
+  </li>
+  <li><i>hello, world (null teminated)</i>
+<pre><code>
+    push 0
+    push 10
+    push 100
+    push 108
+    push 114
+    push 111
+    push 119
+    push 32
+    push 44
+    push 111
+    push 108
+    push 108
+    push 101
+    push 104
+loop:
+    dup
+    push 0
+    gt
+    swap
+    putc
+    jt loop
+    
 </pre></code>
   </li>
 </ul>
