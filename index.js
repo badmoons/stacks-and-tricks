@@ -192,7 +192,8 @@ class VM {
 	this.program = []
 	this.stack = new Stack();
 	this.ip = 0;
-	this.output = new Queue();
+	this.output = new Queue(); // This is like output device emulation, kind of
+	// this.input = new Queue(); input device TBD
     }	
     
     set_ip(value) {

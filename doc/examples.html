@@ -11,21 +11,22 @@
 <ul>
   <li><i>Fibonacci sequence</i>
 <pre><code>
-push 0
-push 1
-push 1
+    push 0
+    push 1
+    push 1
 loop:
-print
-;; push newline
-push 10
-putc
-over
-add
-dup
-dup
-push 230
-gt
-jt loop
+    print
+    ;; push newline
+    push 10
+    putc
+    over
+    add
+    dup
+    dup
+    push 230
+    swap
+    gt
+    jt loop
 </pre></code>
   </li>
   <li><i>Truth machine</i>
@@ -62,13 +63,13 @@ the_end:
     push 108
     push 101
     push 104
-loop:
+printstr:
     dup
     push 0
     gt
     swap
     putc
-    jt loop
+    jt printstr
     
 </pre></code>
   </li>
